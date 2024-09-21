@@ -1,3 +1,7 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <cmath>
 #include "waves.cuh"
 
 void allocate_memory(int nx, int ny, float **u, float **u_new) {
