@@ -103,20 +103,29 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    // Read grid size, steps, and increment from command line arguments
-    int grid_size_x = 0, grid_size_y = 0, steps = 0, increment = 0;
+    // Parse command line arguments
+    int nx = 0, ny = 0, steps = 0, increment = 0;
     for (int i = 1; i < argc; i += 2) {
-        if (std::string(argv[i]) == "--grid_size_x") grid_size_x = std::atoi(argv[i + 1]);
-        else if (std::string(argv[i]) == "--grid_size_y") grid_size_y = std::atoi(argv[i + 1]);
+        if (std::string(argv[i]) == "--grid_size_x") nx = std::atoi(argv[i + 1]);
+        else if (std::string(argv[i]) == "--grid_size_y") ny = std::atoi(argv[i + 1]);
         else if (std::string(argv[i]) == "--steps") steps = std::atoi(argv[i + 1]);
         else if (std::string(argv[i]) == "--increment") increment = std::atoi(argv[i + 1]);
     }
-
-    // Assign to nx and ny for compatibility with existing code
-    int nx = grid_size_x;
-    int ny = grid_size_y;
-
-    std::cout << "nx: " << nx << " ny: " << ny << " steps: " << steps << " increment: " << increment << std::endl;
+    
+    // Check if all required parameters were provided
+    if (nx == 0 || ny == 0 || steps == 0 || increment == 0) {
+        std::cerr << "Error: Missing or invalid command line arguments" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " --grid_size_x <nx> --grid_size_y <ny> --steps <steps> --increment <increment>" << std::endl;
+        return 1;
+    }
+    // Print out the args for debugging
+    std::cout << "Debugging: Command line arguments" << std::endl;
+    std::cout << "grid_size_x (nx): " << nx << std::endl;
+    std::cout << "grid_size_y (ny): " << ny << std::endl;
+    std::cout << "steps: " << steps << std::endl;
+    std::cout << "increment: " << increment << std::endl;
+    std::cout << std::endl;
+    }
 
     // Grid dimensions
     int source_position = (nx / 2) * nx + (ny / 2);  // Center of the grid
