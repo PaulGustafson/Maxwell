@@ -64,8 +64,8 @@ __device__ void update_e (
   ez[cell_id] = dz[cell_id] / er[cell_id];
 }
 
-constexpr int nx = 100;  // Grid size
-constexpr int ny = 100;
+int nx;
+int ny;
 constexpr float dx = 1.0f;
 constexpr float dy = 1.0f;
 constexpr float dt = 1e-9;  // Time step
@@ -100,7 +100,17 @@ __global__ void fdtd_update(int nx, int ny, float dx, float dy, float C0_p_dt, i
     }
 }
 
-int main() {
+void parse_command_line_args(int argc, char* argv[]) {
+    for (int i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "--grid_size") == 0) {
+            nx = atoi(argv[++i]);
+            ny = nx;  // Assuming square grid
+        }
+        // Add more parameters as needed
+    }
+}
+
+int main(int argc, char* argv[]) {
     // Allocate memory on device
     cudaMalloc(&ez, nx * ny * sizeof(float));
     cudaMalloc(&dz, nx * ny * sizeof(float));
@@ -113,6 +123,7 @@ int main() {
     init_fields<<<(nx * ny + 255) / 256, 256>>>(nx, ny, ez, dz, hx, hy, er, mh);
     cudaDeviceSynchronize();
 
+    parse_command_line_args(argc, argv);
     // Time-stepping loop
     for (int step = 0; step < steps; ++step) {
         float t = step * dt;
