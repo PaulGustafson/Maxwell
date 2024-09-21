@@ -4,15 +4,37 @@
 #include <string>
 #include "maxwells.cuh"
 
-constexpr int nx = 1000;  // Grid size
-constexpr int ny = 1000;
-constexpr int increment = 10;   // Steps between data logging event
-constexpr int steps = increment*15*10;   // Number of time steps
-constexpr int source_position = (nx / 2) * nx + (ny / 2);  // Center of the grid
+int main(int argc, char *argv[]) {
+    if (argc < 5) {
+        std::cerr << "Usage: " << argv[0] << " nx ny steps inc" << std::endl;
+        return 1;
+    }
 
-int main() {
-    float *ez, *dz, *hx, *hy, *er, *mh;
+    // Parse command line arguments
+    int nx = 0, ny = 0, steps = 0, increment = 0;
+    for (int i = 1; i < argc; i += 2) {
+        if (std::string(argv[i]) == "--grid_size_x") nx = std::atoi(argv[i + 1]);
+        else if (std::string(argv[i]) == "--grid_size_y") ny = std::atoi(argv[i + 1]);
+        else if (std::string(argv[i]) == "--steps") steps = std::atoi(argv[i + 1]);
+        else if (std::string(argv[i]) == "--increment") increment = std::atoi(argv[i + 1]);
+    }
+    
+    // Check if all required parameters were provided
+    if (nx == 0 || ny == 0 || steps == 0 || increment == 0) {
+        std::cerr << "Error: Missing or invalid command line arguments" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " --grid_size_x <nx> --grid_size_y <ny> --steps <steps> --increment <increment>" << std::endl;
+        return 1;
+    }
+    // Print out the args for debugging
+    std::cout << "Debugging: Command line arguments" << std::endl;
+    std::cout << "grid_size_x (nx): " << nx << std::endl;
+    std::cout << "grid_size_y (ny): " << ny << std::endl;
+    std::cout << "steps: " << steps << std::endl;
+    std::cout << "increment: " << increment << std::endl;
+    std::cout << std::endl;
 
+    // Grid dimensions
+    int source_position = (nx / 2) * nx + (ny / 2);  
     // Allocate memory
     allocate_memory(nx, ny, &ez, &dz, &hx, &hy, &er, &mh);
 
