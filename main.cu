@@ -125,7 +125,6 @@ int main(int argc, char** argv) {
     std::cout << "steps: " << steps << std::endl;
     std::cout << "increment: " << increment << std::endl;
     std::cout << std::endl;
-    }
 
     // Grid dimensions
     int source_position = (nx / 2) * nx + (ny / 2);  // Center of the grid
