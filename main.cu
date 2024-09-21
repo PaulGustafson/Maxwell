@@ -4,14 +4,6 @@
 #include <string>
 #include "maxwells.cuh"
 
-constexpr float dx = 1.0f;
-constexpr float dy = 1.0f;
-constexpr float dt = 1e-9;  // Time step
-constexpr float C0_p_dt = C0 * dt;
-
-// Device arrays
-float *ez, *dz, *hx, *hy, *er, *mh;
-
 int main(int argc, char *argv[]) {
     if (argc < 5) {
         std::cerr << "Usage: " << argv[0] << " nx ny steps inc" << std::endl;

@@ -10,6 +10,8 @@ constexpr float dy = 1.0f;
 constexpr float dt = 1e-9f;
 constexpr float C0_p_dt = C0 * dt;
 
+float *ez, *dz, *hx, *hy, *er, *mh;
+
 // Public function declarations
 void allocate_memory(int nx, int ny, float **ez, float **dz, float **hx, float **hy, float **er, float **mh);
 void initialize_fields(int nx, int ny, float *ez, float *dz, float *hx, float *hy, float *er, float *mh);
