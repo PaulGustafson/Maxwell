@@ -103,11 +103,29 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    // // Read nx and ny from command line
-    int nx = std::atoi(argv[1]);
-    int ny = std::atoi(argv[2]);
-    int steps = std::atoi(argv[3]);
-    int increment = std::atoi(argv[4]);
+    // Parse command line arguments
+    int nx = 0, ny = 0, steps = 0, increment = 0;
+    for (int i = 1; i < argc; i += 2) {
+        if (std::string(argv[i]) == "--grid_size_x") nx = std::atoi(argv[i + 1]);
+        else if (std::string(argv[i]) == "--grid_size_y") ny = std::atoi(argv[i + 1]);
+        else if (std::string(argv[i]) == "--steps") steps = std::atoi(argv[i + 1]);
+        else if (std::string(argv[i]) == "--increment") increment = std::atoi(argv[i + 1]);
+    }
+    
+    // Check if all required parameters were provided
+    if (nx == 0 || ny == 0 || steps == 0 || increment == 0) {
+        std::cerr << "Error: Missing or invalid command line arguments" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " --grid_size_x <nx> --grid_size_y <ny> --steps <steps> --increment <increment>" << std::endl;
+        return 1;
+    }
+    // Print out the args for debugging
+    std::cout << "Debugging: Command line arguments" << std::endl;
+    std::cout << "grid_size_x (nx): " << nx << std::endl;
+    std::cout << "grid_size_y (ny): " << ny << std::endl;
+    std::cout << "steps: " << steps << std::endl;
+    std::cout << "increment: " << increment << std::endl;
+    std::cout << std::endl;
+    }
 
 
     // Grid dimensions
