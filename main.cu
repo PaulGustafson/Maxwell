@@ -69,8 +69,8 @@ constexpr int ny = 100;
 constexpr float dx = 1.0f;
 constexpr float dy = 1.0f;
 constexpr float dt = 1e-9;  // Time step
-constexpr int steps = 30;   // Number of time steps
-constexpr int increment = 2;   // Steps between data logging event
+constexpr int increment = 10;   // Steps between data logging event
+constexpr int steps = increment*15;   // Number of time steps
 constexpr float C0_p_dt = C0 * dt;
 constexpr int source_position = (nx / 2) * nx + (ny / 2);  // Center of the grid
 
