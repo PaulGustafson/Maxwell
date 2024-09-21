@@ -3,8 +3,8 @@
 #include <fstream>
 #include <string>
 #include <cuda_runtime.h>
+#include "main.h"
 
-constexpr float C0 = 299792458.0f; 
 
 __device__ float update_curl_ex (int nx, int cell_x, int cell_y, int cell_id, float dy, const float * ez) {
   const int top_neighbor_id = nx * (cell_y + 1) + cell_x;
@@ -31,7 +31,7 @@ __device__ void update_h (
   hy[cell_id] -= mh[cell_id] * cey;
 }
 
-__device__ static float update_curl_h (
+__device__ float update_curl_h (
   int nx, int cell_id, int cell_x, int cell_y, float dx, float dy,
   const float *hx, const float *hy) {
   const int left_neighbor_id = cell_x == 0 ? cell_y * nx + nx - 1 : cell_id - 1;
@@ -64,14 +64,10 @@ __device__ void update_e (
   ez[cell_id] = dz[cell_id] / er[cell_id];
 }
 
-constexpr int nx = 100;  // Grid size
-constexpr int ny = 100;
-constexpr float dx = 1.0f;
-constexpr float dy = 1.0f;
-constexpr float dt = 1e-9;  // Time step
+constexpr int nx = 1000;  // Grid size
+constexpr int ny = 1000;
 constexpr int increment = 10;   // Steps between data logging event
-constexpr int steps = increment*15;   // Number of time steps
-constexpr float C0_p_dt = C0 * dt;
+constexpr int steps = increment*15*10;   // Number of time steps
 constexpr int source_position = (nx / 2) * nx + (ny / 2);  // Center of the grid
 
 // Device arrays
@@ -100,52 +96,52 @@ __global__ void fdtd_update(int nx, int ny, float dx, float dy, float C0_p_dt, i
     }
 }
 
-int main() {
-    // Allocate memory on device
-    cudaMalloc(&ez, nx * ny * sizeof(float));
-    cudaMalloc(&dz, nx * ny * sizeof(float));
-    cudaMalloc(&hx, nx * ny * sizeof(float));
-    cudaMalloc(&hy, nx * ny * sizeof(float));
-    cudaMalloc(&er, nx * ny * sizeof(float));
-    cudaMalloc(&mh, nx * ny * sizeof(float));
+// int main() {
+//     // Allocate memory on device
+//     cudaMalloc(&ez, nx * ny * sizeof(float));
+//     cudaMalloc(&dz, nx * ny * sizeof(float));
+//     cudaMalloc(&hx, nx * ny * sizeof(float));
+//     cudaMalloc(&hy, nx * ny * sizeof(float));
+//     cudaMalloc(&er, nx * ny * sizeof(float));
+//     cudaMalloc(&mh, nx * ny * sizeof(float));
 
-    // Initialize fields on the device
-    init_fields<<<(nx * ny + 255) / 256, 256>>>(nx, ny, ez, dz, hx, hy, er, mh);
-    cudaDeviceSynchronize();
+//     // Initialize fields on the device
+//     init_fields<<<(nx * ny + 255) / 256, 256>>>(nx, ny, ez, dz, hx, hy, er, mh);
+//     cudaDeviceSynchronize();
 
-    // Time-stepping loop
-    for (int step = 0; step < steps; ++step) {
-        float t = step * dt;
-        fdtd_update<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, C0_p_dt, source_position, t, ez, dz, hx, hy, er, mh);
-        cudaDeviceSynchronize();
+//     // Time-stepping loop
+//     for (int step = 0; step < steps; ++step) {
+//         float t = step * dt;
+//         fdtd_update<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, C0_p_dt, source_position, t, ez, dz, hx, hy, er, mh);
+//         cudaDeviceSynchronize();
 
-        // Optionally print or log values of the field at the center of the grid
-        if (step % increment == 0) {
-            float ez_center;
-            cudaMemcpy(&ez_center, &ez[source_position], sizeof(float), cudaMemcpyDeviceToHost);
-            std::cout << "Step " << step << ", t = " << t << ", Ez at center: " << ez_center << std::endl;
+//         // Optionally print or log values of the field at the center of the grid
+//         if (step % increment == 0) {
+//             float ez_center;
+//             cudaMemcpy(&ez_center, &ez[source_position], sizeof(float), cudaMemcpyDeviceToHost);
+//             std::cout << "Step " << step << ", t = " << t << ", Ez at center: " << ez_center << std::endl;
 
-            // Print to file
-            float *h_ez = (float*)malloc(nx * ny * sizeof(float));  // Host-side copy of ez
-            cudaMemcpy(h_ez, ez, nx * ny * sizeof(float), cudaMemcpyDeviceToHost);
-            std::ofstream file("data/ez_step_" + std::to_string(step) + ".txt");
-            for (int y = 0; y < ny; ++y) {
-                for (int x = 0; x < nx; ++x) {
-                    file << h_ez[y * nx + x] << " ";
-                }
-                file << "\n";
-            }
-            file.close();
-        }
-    }
+//             // Print to file
+//             float *h_ez = (float*)malloc(nx * ny * sizeof(float));  // Host-side copy of ez
+//             cudaMemcpy(h_ez, ez, nx * ny * sizeof(float), cudaMemcpyDeviceToHost);
+//             std::ofstream file("data/ez_step_" + std::to_string(step) + ".txt");
+//             for (int y = 0; y < ny; ++y) {
+//                 for (int x = 0; x < nx; ++x) {
+//                     file << h_ez[y * nx + x] << " ";
+//                 }
+//                 file << "\n";
+//             }
+//             file.close();
+//         }
+//     }
 
-    // Free memory
-    cudaFree(ez);
-    cudaFree(dz);
-    cudaFree(hx);
-    cudaFree(hy);
-    cudaFree(er);
-    cudaFree(mh);
+//     // Free memory
+//     cudaFree(ez);
+//     cudaFree(dz);
+//     cudaFree(hx);
+//     cudaFree(hy);
+//     cudaFree(er);
+//     cudaFree(mh);
 
-    return 0;
-}
+//     return 0;
+// }

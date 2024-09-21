@@ -11,6 +11,6 @@ References:
 
 ## Steps to Reproduce Single GPU Benchmarking Results
 - Benchmaarking script is called `fdtd_benchmark.cu`
-- Compile via `nvcc -O3 fdtd_benchmark.cu -o fdtd_benchmark`
+- Compile via `nvcc -c main.cu -o main.o` and `nvcc fdtd_benchmark.cu main.o -o fdtd_benchmark`
 - Run via `./fdtd_benchmark`
 - Note: Results for Single GPU Benchmarking can be found [at this link](https://docs.google.com/spreadsheets/d/1krkTRtscSdfPweV9PB49tEk6Qup0lxjPkI4EdEInOlA/edit?gid=0#gid=0).
