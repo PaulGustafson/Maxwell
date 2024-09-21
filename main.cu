@@ -69,7 +69,8 @@ constexpr int ny = 100;
 constexpr float dx = 1.0f;
 constexpr float dy = 1.0f;
 constexpr float dt = 1e-9;  // Time step
-constexpr int steps = 10;   // Number of time steps
+constexpr int steps = 30;   // Number of time steps
+constexpr int increment = 2;   // Steps between data logging event
 constexpr float C0_p_dt = C0 * dt;
 constexpr int source_position = (nx / 2) * nx + (ny / 2);  // Center of the grid
 
@@ -119,7 +120,7 @@ int main() {
         cudaDeviceSynchronize();
 
         // Optionally print or log values of the field at the center of the grid
-        if (step % 1 == 0) {
+        if (step % increment == 0) {
             float ez_center;
             cudaMemcpy(&ez_center, &ez[source_position], sizeof(float), cudaMemcpyDeviceToHost);
             std::cout << "Step " << step << ", t = " << t << ", Ez at center: " << ez_center << std::endl;
