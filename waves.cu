@@ -15,6 +15,16 @@ void free_memory(float *u, float *u_new) {
     cudaFree(u_new);
 }
 
+void write_state(int nx, int ny, float *u, int step) {
+    std::ofstream file("data/u_step_" + std::to_string(step) + ".txt");
+    for (int y = 0; y < ny; ++y) {
+        for (int x = 0; x < nx; ++x) {
+            file << u[y * nx + x] << " ";
+        }
+        file << "\n";
+    }
+    file.close();
+}
 
 __global__ void init_fields(int nx, int ny, float *u, float *u_new) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;

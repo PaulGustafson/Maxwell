@@ -13,6 +13,7 @@ extern float *u, *u_new;
 
 void allocate_memory(int nx, int ny, float **u, float **u_new);
 void initialize_fields(int nx, int ny, float *u, float *u_new);
+void write_state(int nx, int ny, float *u, int step);
 void run_fdtd_step(int nx, int ny, float dx, float dy, float c_p_dt, int source_position, float t,
                    float *u, float *u_new);
 void free_memory(float *u, float *u_new);
