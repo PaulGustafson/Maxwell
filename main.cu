@@ -6,16 +6,16 @@
 
 constexpr float C0 = 299792458.0f; 
 
-__device__ float update_curl_ex (int nx, int cell_x, int cell_y, int cell_id, float dy, const float * ez) {
+__device__ float update_curl_ex (int nx, int cell_x, int cell_y, int cell_id, float dy, const float * ez, float ez_val) {
   const int top_neighbor_id = nx * (cell_y + 1) + cell_x;
-  return (ez[top_neighbor_id] - ez[cell_id]) / dy;
+  return (ez[top_neighbor_id] - ez_val) / dy;
 }
 
 __device__ float update_curl_ey (
   int nx, int cell_x, int cell_y, int cell_id,
-  float dx, const float * ez) {
+  float dx, const float * ez, float ez_val) {
   const int right_neighbor_id = cell_x == nx - 1 ? cell_y * nx + 0 : cell_id + 1;
-  return -(ez[right_neighbor_id] - ez[cell_id]) / dx;
+  return -(ez[right_neighbor_id] - ez_val) / dx;
 }
 
 __device__ void update_h (
@@ -25,10 +25,15 @@ __device__ void update_h (
   float *hx, float *hy) {
   const int cell_x = cell_id % nx;
   const int cell_y = cell_id / nx;
-  const float cex = update_curl_ex(nx, cell_x, cell_y, cell_id, dy, ez);
-  const float cey = update_curl_ey(nx, cell_x, cell_y, cell_id, dx, ez);
-  hx[cell_id] -= mh[cell_id] * cex;
-  hy[cell_id] -= mh[cell_id] * cey;
+  float ez_val = ez[cell_id];
+  //! Save 1 global memory call
+  const float cex = update_curl_ex(nx, cell_x, cell_y, cell_id, dy, ez, ez_val);
+  const float cey = update_curl_ey(nx, cell_x, cell_y, cell_id, dx, ez, ez_val);
+
+  //! Save 1 global memory call
+  const float mh_id = mh[cell_id];
+  hx[cell_id] -= mh_id * cex;
+  hy[cell_id] -= mh_id * cey;
 }
 
 __device__ static float update_curl_h (
