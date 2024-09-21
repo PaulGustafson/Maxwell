@@ -18,19 +18,6 @@ __device__ float update_curl_ey (
   return -(ez[right_neighbor_id] - ez[cell_id]) / dx;
 }
 
-__device__ void update_h (
-  int nx, int cell_id,
-  float dx, float dy,
-  const float *ez, const float *mh,
-  float *hx, float *hy) {
-  const int cell_x = cell_id % nx;
-  const int cell_y = cell_id / nx;
-  const float cex = update_curl_ex(nx, cell_x, cell_y, cell_id, dy, ez);
-  const float cey = update_curl_ey(nx, cell_x, cell_y, cell_id, dx, ez);
-  hx[cell_id] -= mh[cell_id] * cex;
-  hy[cell_id] -= mh[cell_id] * cey;
-}
-
 __device__ static float update_curl_h (
   int nx, int cell_id, int cell_x, int cell_y, float dx, float dy,
   const float *hx, const float *hy) {
@@ -38,6 +25,26 @@ __device__ static float update_curl_h (
   const int bottom_neighbor_id = nx * (cell_y - 1) + cell_x;
   return (hy[cell_id] - hy[left_neighbor_id]) / dx
        - (hx[cell_id] - hx[bottom_neighbor_id]) / dy;
+}
+
+
+__global__ void update_h_kernel(int nx, int ny, float dx, float dy,
+  const float *ez, const float *mh,
+  float *hx, float *hy, int total) {
+
+  const int cell_id = blockIdx.x * blockDim.x + threadIdx.x;
+  if (cell_id < total){
+    const int cell_x = cell_id % nx;
+    const int cell_y = cell_id / nx;
+    //
+    const float cex = update_curl_ex(nx, cell_x, cell_y, cell_id, dy, ez);
+    const float cey = update_curl_ey(nx, cell_x, cell_y, cell_id, dx, ez);
+
+    //! Save 1 global memory call
+    const float mh_id = mh[cell_id];
+    hx[cell_id] -= mh_id * cex;
+    hy[cell_id] -= mh_id * cey;
+  }
 }
 
 __device__ float gaussian_pulse (float t, float t_0, float tau) {
@@ -50,19 +57,48 @@ __device__ float calculate_source (float t, float frequency) {
   return gaussian_pulse (t, t_0, tau);
 }
 
-__device__ void update_e (
-  int nx, int cell_id, int own_in_process_begin, int source_position,
+__global__ void update_e_kernel(int nx, int source_position,
   float t, float dx, float dy, float C0_p_dt,
   float *ez, float *dz,
-  const float *er,const float *hx, const float *hy) {
-  const int cell_x = cell_id % nx;
+  const float *er,const float *hx, const float *hy, int total) {
+
+  const int cell_id = blockIdx.x * blockDim.x + threadIdx.x;
+
+if (cell_id < total){  
+const int cell_x = cell_id % nx;
   const int cell_y = cell_id / nx;
   const float chz = update_curl_h (nx, cell_id, cell_x, cell_y, dx, dy, hx, hy);
   dz[cell_id] += C0_p_dt * chz;
-  if ((own_in_process_begin + cell_y) * nx + cell_x == source_position)
+  if ((cell_y) * nx + cell_x == source_position)
     dz[cell_id] += calculate_source (t, 5E+7);
   ez[cell_id] = dz[cell_id] / er[cell_id];
 }
+  }
+
+
+
+
+
+
+
+// __device__ void update_e (
+//   int nx, int cell_id, int own_in_process_begin, int source_position,
+//   float t, float dx, float dy, float C0_p_dt,
+//   float *ez, float *dz,
+//   const float *er,const float *hx, const float *hy) {
+//   const int cell_x = cell_id % nx;
+//   const int cell_y = cell_id / nx;
+//   const float chz = update_curl_h (nx, cell_id, cell_x, cell_y, dx, dy, hx, hy);
+//   dz[cell_id] += C0_p_dt * chz;
+//   if ((own_in_process_begin + cell_y) * nx + cell_x == source_position)
+//     dz[cell_id] += calculate_source (t, 5E+7);
+//   ez[cell_id] = dz[cell_id] / er[cell_id];
+// }
+
+// ------------- 
+//
+//
+// -------------
 
 // constexpr int nx = 100;  // Grid size
 // constexpr int ny = 100;
@@ -88,14 +124,14 @@ __global__ void init_fields(int nx, int ny, float *ez, float *dz, float *hx, flo
 }
 
 // Kernel for running FDTD updates
-__global__ void fdtd_update(int nx, int ny, float dx, float dy, float C0_p_dt, int source_position, float t,
-                            float *ez, float *dz, float *hx, float *hy, const float *er, const float *mh) {
-    int cell_id = blockIdx.x * blockDim.x + threadIdx.x;
-    if (cell_id < nx * ny) {
-        update_h(nx, cell_id, dx, dy, ez, mh, hx, hy);
-        update_e(nx, cell_id, 0, source_position, t, dx, dy, C0_p_dt, ez, dz, er, hx, hy);
-    }
-}
+// __global__ void fdtd_update(int nx, int ny, float dx, float dy, float C0_p_dt, int source_position, float t,
+//                             float *ez, float *dz, float *hx, float *hy, const float *er, const float *mh) {
+//     int cell_id = blockIdx.x * blockDim.x + threadIdx.x;
+//     if (cell_id < nx * ny) {
+//         update_h(nx, cell_id, dx, dy, ez, mh, hx, hy);
+//         update_e(nx, cell_id, 0, source_position, t, dx, dy, C0_p_dt, ez, dz, er, hx, hy);
+//     }
+// }
 
 int main(int argc, char** argv) {
     if (argc < 5) {
@@ -103,28 +139,12 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    // Parse command line arguments
-    int nx = 0, ny = 0, steps = 0, increment = 0;
-    for (int i = 1; i < argc; i += 2) {
-        if (std::string(argv[i]) == "--grid_size_x") nx = std::atoi(argv[i + 1]);
-        else if (std::string(argv[i]) == "--grid_size_y") ny = std::atoi(argv[i + 1]);
-        else if (std::string(argv[i]) == "--steps") steps = std::atoi(argv[i + 1]);
-        else if (std::string(argv[i]) == "--increment") increment = std::atoi(argv[i + 1]);
-    }
-    
-    // Check if all required parameters were provided
-    if (nx == 0 || ny == 0 || steps == 0 || increment == 0) {
-        std::cerr << "Error: Missing or invalid command line arguments" << std::endl;
-        std::cerr << "Usage: " << argv[0] << " --grid_size_x <nx> --grid_size_y <ny> --steps <steps> --increment <increment>" << std::endl;
-        return 1;
-    }
-    // Print out the args for debugging
-    std::cout << "Debugging: Command line arguments" << std::endl;
-    std::cout << "grid_size_x (nx): " << nx << std::endl;
-    std::cout << "grid_size_y (ny): " << ny << std::endl;
-    std::cout << "steps: " << steps << std::endl;
-    std::cout << "increment: " << increment << std::endl;
-    std::cout << std::endl;
+    // // Read nx and ny from command line
+    int nx = std::atoi(argv[1]);
+    int ny = std::atoi(argv[2]);
+    int steps = std::atoi(argv[3]);
+    int increment = std::atoi(argv[4]);
+
 
     // Grid dimensions
     int source_position = (nx / 2) * nx + (ny / 2);  // Center of the grid
@@ -140,12 +160,16 @@ int main(int argc, char** argv) {
     // Initialize fields on the device
     init_fields<<<(nx * ny + 255) / 256, 256>>>(nx, ny, ez, dz, hx, hy, er, mh);
     cudaDeviceSynchronize();
-
+    int total = nx*ny;
     // Time-stepping loop
     for (int step = 0; step < steps; ++step) {
         float t = step * dt;
-        fdtd_update<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, C0_p_dt, source_position, t, ez, dz, hx, hy, er, mh);
-        cudaDeviceSynchronize();
+        // fdtd_update<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, C0_p_dt, source_position, t, ez, dz, hx, hy, er, mh);
+        // cudaDeviceSynchronize();
+
+        update_h_kernel<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, ez, mh, hx, hy, total);
+        update_e_kernel<<<(nx * ny + 255) / 256, 256>>>(nx, source_position, t, dx,dy, C0_p_dt, ez, dz, er, hx, hy, total);
+        
 
         // Optionally print or log values of the field at the center of the grid
         if (step % increment == 0) {
