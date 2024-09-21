@@ -170,9 +170,42 @@ int main(int argc, char** argv) {
             check_cuda_error(cudaMemcpy(&ez_center_1, &ez_1[source_position - (ny / 2) * nx], sizeof(float), cudaMemcpyDeviceToHost), "Copy ez_center_1");
             std::cout << "Step " << step << ", t = " << t << ", Ez at center GPU 0: " << ez_center_0 << ", Ez at center GPU 1: " << ez_center_1 << std::endl;
 
+            float *h_ez_0 = (float*)malloc(nx * (ny / 2) * sizeof(float));  // Host-side copy for GPU 0
+            float *h_ez_1 = (float*)malloc(nx * (ny / 2) * sizeof(float));  // Host-side copy for GPU 1
+
+            // Copy data from both GPUs
+            check_cuda_error(cudaMemcpy(h_ez_0, ez_0, nx * (ny / 2) * sizeof(float), cudaMemcpyDeviceToHost), "Copy ez_0 to host");
+            check_cuda_error(cudaMemcpy(h_ez_1, ez_1, nx * (ny / 2) * sizeof(float), cudaMemcpyDeviceToHost), "Copy ez_1 to host");
+
             // Print to file
-            // Add code to save data as needed...
+            std::ofstream file("data/ez_step_" + std::to_string(step) + ".txt");
+            if (file.is_open()) {
+                // Write data from GPU 0
+                for (int y = 0; y < ny / 2; ++y) {
+                    for (int x = 0; x < nx; ++x) {
+                        file << h_ez_0[y * nx + x] << " ";
+                    }
+                    file << "\n";
+                }
+                
+                // Write data from GPU 1
+                for (int y = 0; y < ny / 2; ++y) {
+                    for (int x = 0; x < nx; ++x) {
+                        file << h_ez_1[y * nx + x] << " ";
+                    }
+                    file << "\n";
+                }
+                
+                file.close();
+            } else {
+                std::cerr << "Unable to open file for writing" << std::endl;
+            }
+
+            // Free host memory
+            free(h_ez_0);
+            free(h_ez_1);
         }
+
     }
 
     // Free memory
