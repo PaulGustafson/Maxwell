@@ -59,13 +59,6 @@ __device__ void update_e (
   ez[cell_id] = dz[cell_id] / er[cell_id];
 }
 
-// CUDA kernels
-constexpr int nx = 1000;  // Grid size
-constexpr int ny = 1000;
-constexpr int increment = 10;   // Steps between data logging event
-constexpr int steps = increment*15*10;   // Number of time steps
-constexpr int source_position = (nx / 2) * nx + (ny / 2);  // Center of the grid
-
 // Device arrays
 float *ez, *dz, *hx, *hy, *er, *mh;
 
