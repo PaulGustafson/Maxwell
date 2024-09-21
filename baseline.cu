@@ -1,3 +1,6 @@
+#include <iostream>
+#include <cmath>
+
 constexpr float C0 = 299792458.0f; 
 
 __device__ float update_curl_ex (int nx, int cell_x, int cell_y, int cell_id, float dy, const float * ez) {
@@ -56,4 +59,77 @@ __device__ void update_e (
   if ((own_in_process_begin + cell_y) * nx + cell_x == source_position)
     dz[cell_id] += calculate_source (t, 5E+7);
   ez[cell_id] = dz[cell_id] / er[cell_id];
+}
+
+constexpr int nx = 100;  // Grid size
+constexpr int ny = 100;
+constexpr float dx = 1.0f;
+constexpr float dy = 1.0f;
+constexpr float dt = 1e-9;  // Time step
+constexpr int steps = 10;   // Number of time steps
+constexpr float C0_p_dt = C0 * dt;
+constexpr int source_position = (nx / 2) * nx + (ny / 2);  // Center of the grid
+
+// Device arrays
+float *ez, *dz, *hx, *hy, *er, *mh;
+
+// Kernel to initialize the arrays
+__global__ void init_fields(int nx, int ny, float *ez, float *dz, float *hx, float *hy, float *er, float *mh) {
+    int cell_id = blockIdx.x * blockDim.x + threadIdx.x;
+    if (cell_id < nx * ny) {
+        ez[cell_id] = 0.0f;
+        dz[cell_id] = 0.0f;
+        hx[cell_id] = 0.0f;
+        hy[cell_id] = 0.0f;
+        er[cell_id] = 1.0f;  // Free space
+        mh[cell_id] = 1.0f;
+    }
+}
+
+// Kernel for running FDTD updates
+__global__ void fdtd_update(int nx, int ny, float dx, float dy, float C0_p_dt, int source_position, float t,
+                            float *ez, float *dz, float *hx, float *hy, const float *er, const float *mh) {
+    int cell_id = blockIdx.x * blockDim.x + threadIdx.x;
+    if (cell_id < nx * ny) {
+        update_h(nx, cell_id, dx, dy, ez, mh, hx, hy);
+        update_e(nx, cell_id, 0, source_position, t, dx, dy, C0_p_dt, ez, dz, er, hx, hy);
+    }
+}
+
+int main() {
+    // Allocate memory on device
+    cudaMalloc(&ez, nx * ny * sizeof(float));
+    cudaMalloc(&dz, nx * ny * sizeof(float));
+    cudaMalloc(&hx, nx * ny * sizeof(float));
+    cudaMalloc(&hy, nx * ny * sizeof(float));
+    cudaMalloc(&er, nx * ny * sizeof(float));
+    cudaMalloc(&mh, nx * ny * sizeof(float));
+
+    // Initialize fields on the device
+    init_fields<<<(nx * ny + 255) / 256, 256>>>(nx, ny, ez, dz, hx, hy, er, mh);
+    cudaDeviceSynchronize();
+
+    // Time-stepping loop
+    for (int step = 0; step < steps; ++step) {
+        float t = step * dt;
+        fdtd_update<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, C0_p_dt, source_position, t, ez, dz, hx, hy, er, mh);
+        cudaDeviceSynchronize();
+
+        // Optionally print or log values of the field at the center of the grid
+        if (step % 1 == 0) {
+            float ez_center;
+            cudaMemcpy(&ez_center, &ez[source_position], sizeof(float), cudaMemcpyDeviceToHost);
+            std::cout << "Step " << step << ", t = " << t << ", Ez at center: " << ez_center << std::endl;
+        }
+    }
+
+    // Free memory
+    cudaFree(ez);
+    cudaFree(dz);
+    cudaFree(hx);
+    cudaFree(hy);
+    cudaFree(er);
+    cudaFree(mh);
+
+    return 0;
 }
