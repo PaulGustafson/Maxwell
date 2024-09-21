@@ -4,6 +4,9 @@
 #include <string>
 #include "maxwells.cuh"
 
+// Add these definitions at the global scope in main.cu
+float *ez, *dz, *hx, *hy, *er, *mh;
+
 int main(int argc, char *argv[]) {
     if (argc < 5) {
         std::cerr << "Usage: " << argv[0] << " nx ny steps inc" << std::endl;
