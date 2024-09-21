@@ -2,7 +2,7 @@
 #include <cmath>
 #include <fstream>
 #include <string>
-#include "maxwells.h"
+#include "maxwells.cuh"
 
 constexpr int nx = 1000;  // Grid size
 constexpr int ny = 1000;

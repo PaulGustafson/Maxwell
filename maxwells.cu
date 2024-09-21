@@ -1,5 +1,4 @@
-#include <cuda_runtime.h>
-#include "maxwells.h"
+#include "maxwells.cuh"
 
 // CUDA device functions
 __device__ float update_curl_ex (int nx, int cell_x, int cell_y, int cell_id, float dy, const float * ez) {
