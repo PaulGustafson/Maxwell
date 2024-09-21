@@ -31,12 +31,12 @@ BenchmarkResult measureKernelPerformance(int nx, int ny, float dx, float dy, flo
     cudaEventCreate(&stop);
 
     // Warm-up run
-    fdtd_update<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, C0_p_dt, source_position, t, ez, dz, hx, hy, er, mh);
+    run_fdtd_step(nx, ny, dx, dy, C0_p_dt, source_position, t, ez, dz, hx, hy, er, mh);
     cudaDeviceSynchronize();
 
     // Timed run
     cudaEventRecord(start);
-    fdtd_update<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, C0_p_dt, source_position, t, ez, dz, hx, hy, er, mh);
+    run_fdtd_step(nx, ny, dx, dy, C0_p_dt, source_position, t, ez, dz, hx, hy, er, mh);
     cudaEventRecord(stop);
 
     cudaEventSynchronize(stop);
@@ -85,7 +85,7 @@ void runBenchmarks() {
         cudaMalloc(&mh, nx * ny * sizeof(float));
 
         // Initialize fields on the device
-        init_fields<<<(nx * ny + 255) / 256, 256>>>(nx, ny, ez, dz, hx, hy, er, mh);
+        initialize_fields(nx, ny, ez, dz, hx, hy, er, mh);
         cudaDeviceSynchronize();
 
         // Measure total execution time
