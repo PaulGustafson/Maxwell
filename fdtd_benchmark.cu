@@ -3,7 +3,8 @@
 #include <chrono>
 #include <cuda_runtime.h>
 #include <cuda.h>
-#include "main.h" // Include the header file
+// Include the header file
+#include "maxwells.cuh" 
 
 // Utility function to check CUDA errors
 #define cudaCheckError() { \
