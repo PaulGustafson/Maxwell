@@ -7,7 +7,7 @@ constexpr float c_wave = 10.0f;
 constexpr float dx = 1.0f;
 constexpr float dy = 1.0f;
 constexpr float dt = 1e-3f;
-constexpr float c_p_dt = c0 * dt;
+constexpr float c_p_dt = c_wave * dt;
 
 extern float *u, *u_new;
 
