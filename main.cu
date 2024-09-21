@@ -69,8 +69,6 @@ __device__ void update_e (
 constexpr float dx = 1.0f;
 constexpr float dy = 1.0f;
 constexpr float dt = 1e-9;  // Time step
-constexpr int increment = 10;   // Steps between data logging event
-constexpr int steps = increment*15;   // Number of time steps
 constexpr float C0_p_dt = C0 * dt;
 
 // Device arrays
@@ -100,14 +98,17 @@ __global__ void fdtd_update(int nx, int ny, float dx, float dy, float C0_p_dt, i
 }
 
 int main(int argc, char** argv) {
-    if (argc < 3) {
-        std::cerr << "Usage: " << argv[0] << " nx ny" << std::endl;
+    if (argc < 5) {
+        std::cerr << "Usage: " << argv[0] << " nx ny steps inc" << std::endl;
         return 1;
     }
 
     // // Read nx and ny from command line
     int nx = std::atoi(argv[1]);
     int ny = std::atoi(argv[2]);
+    int steps = std::atoi(argv[3]);
+    int increment = std::atoi(argv[4]);
+
 
     // Grid dimensions
     int source_position = (nx / 2) * nx + (ny / 2);  // Center of the grid

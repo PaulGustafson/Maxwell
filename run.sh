@@ -1,2 +1,2 @@
 #!/bin/bash
-rm -rf build  && mkdir -p build/data && cd build && cmake .. && make && ./cuda_project 100 100 && cd ..
+rm -rf build  && mkdir -p build/data && cd build && cmake .. && make && ./cuda_project 100 100 150 10 && cd ..
