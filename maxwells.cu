@@ -59,9 +59,6 @@ __device__ void update_e (
   ez[cell_id] = dz[cell_id] / er[cell_id];
 }
 
-// Device arrays
-float *ez, *dz, *hx, *hy, *er, *mh;
-
 // Kernel to initialize the arrays
 __global__ void init_fields(int nx, int ny, float *ez, float *dz, float *hx, float *hy, float *er, float *mh) {
     int cell_id = blockIdx.x * blockDim.x + threadIdx.x;
