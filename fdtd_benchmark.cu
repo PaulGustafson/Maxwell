@@ -3,7 +3,6 @@
 #include <chrono>
 #include <cuda_runtime.h>
 #include <cuda.h>
-// Include the header file
 #include "maxwells.cuh" 
 
 // Utility function to check CUDA errors
@@ -31,12 +30,12 @@ BenchmarkResult measureKernelPerformance(int nx, int ny, float dx, float dy, flo
     cudaEventCreate(&stop);
 
     // Warm-up run
-    run_fdtd_step(nx, ny, dx, dy, C0_p_dt, source_position, t, ez, dz, hx, hy, er, mh);
+    fdtd_update<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, C0_p_dt, source_position, t, ez, dz, hx, hy, er, mh);
     cudaDeviceSynchronize();
 
     // Timed run
     cudaEventRecord(start);
-    run_fdtd_step(nx, ny, dx, dy, C0_p_dt, source_position, t, ez, dz, hx, hy, er, mh);
+    fdtd_update<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, C0_p_dt, source_position, t, ez, dz, hx, hy, er, mh);
     cudaEventRecord(stop);
 
     cudaEventSynchronize(stop);
@@ -85,7 +84,7 @@ void runBenchmarks() {
         cudaMalloc(&mh, nx * ny * sizeof(float));
 
         // Initialize fields on the device
-        initialize_fields(nx, ny, ez, dz, hx, hy, er, mh);
+        init_fields<<<(nx * ny + 255) / 256, 256>>>(nx, ny, ez, dz, hx, hy, er, mh);
         cudaDeviceSynchronize();
 
         // Measure total execution time
