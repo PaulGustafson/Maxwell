@@ -19,4 +19,8 @@ void run_fdtd_step(int nx, int ny, float dx, float dy, float C0_p_dt, int source
                    float *ez, float *dz, float *hx, float *hy, float *er, float *mh);
 void free_memory(float *ez, float *dz, float *hx, float *hy, float *er, float *mh);
 
+__global__ void init_fields(int nx, int ny, float *ez, float *dz, float *hx, float *hy, float *er, float *mh);
+__global__ void fdtd_update(int nx, int ny, float dx, float dy, float C0_p_dt, int source_position, float t,
+                            float *ez, float *dz, float *hx, float *hy, const float *er, const float *mh);
+
 #endif // MAXWELLS_H
