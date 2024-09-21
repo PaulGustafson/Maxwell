@@ -1,5 +1,8 @@
 #include <iostream>
 #include <cmath>
+#include <fstream>
+#include <string>
+#include <cuda_runtime.h>
 
 constexpr float C0 = 299792458.0f; 
 
@@ -120,6 +123,18 @@ int main() {
             float ez_center;
             cudaMemcpy(&ez_center, &ez[source_position], sizeof(float), cudaMemcpyDeviceToHost);
             std::cout << "Step " << step << ", t = " << t << ", Ez at center: " << ez_center << std::endl;
+
+            // Print to file
+            float *h_ez = (float*)malloc(nx * ny * sizeof(float));  // Host-side copy of ez
+            cudaMemcpy(h_ez, ez, nx * ny * sizeof(float), cudaMemcpyDeviceToHost);
+            std::ofstream file("data/ez_step_" + std::to_string(step) + ".txt");
+            for (int y = 0; y < ny; ++y) {
+                for (int x = 0; x < nx; ++x) {
+                    file << h_ez[y * nx + x] << " ";
+                }
+                file << "\n";
+            }
+            file.close();
         }
     }
 
