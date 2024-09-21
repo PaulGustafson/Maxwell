@@ -64,15 +64,14 @@ __device__ void update_e (
   ez[cell_id] = dz[cell_id] / er[cell_id];
 }
 
-constexpr int nx = 100;  // Grid size
-constexpr int ny = 100;
+// constexpr int nx = 100;  // Grid size
+// constexpr int ny = 100;
 constexpr float dx = 1.0f;
 constexpr float dy = 1.0f;
 constexpr float dt = 1e-9;  // Time step
 constexpr int increment = 10;   // Steps between data logging event
 constexpr int steps = increment*15;   // Number of time steps
 constexpr float C0_p_dt = C0 * dt;
-constexpr int source_position = (nx / 2) * nx + (ny / 2);  // Center of the grid
 
 // Device arrays
 float *ez, *dz, *hx, *hy, *er, *mh;
@@ -100,7 +99,19 @@ __global__ void fdtd_update(int nx, int ny, float dx, float dy, float C0_p_dt, i
     }
 }
 
-int main() {
+int main(int argc, char** argv) {
+    if (argc < 3) {
+        std::cerr << "Usage: " << argv[0] << " nx ny" << std::endl;
+        return 1;
+    }
+
+    // // Read nx and ny from command line
+    int nx = std::atoi(argv[1]);
+    int ny = std::atoi(argv[2]);
+
+    // Grid dimensions
+    int source_position = (nx / 2) * nx + (ny / 2);  // Center of the grid
+    
     // Allocate memory on device
     cudaMalloc(&ez, nx * ny * sizeof(float));
     cudaMalloc(&dz, nx * ny * sizeof(float));
