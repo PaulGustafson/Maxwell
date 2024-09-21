@@ -1,3 +1,0 @@
-/home/ubuntu/maxwells/Maxwell/build/CMakeFiles/cuda_project.dir
-/home/ubuntu/maxwells/Maxwell/build/CMakeFiles/edit_cache.dir
-/home/ubuntu/maxwells/Maxwell/build/CMakeFiles/rebuild_cache.dir
