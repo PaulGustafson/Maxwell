@@ -1,0 +1,4 @@
+grid_size_x: 256
+grid_size_y: 256
+steps: 100
+increment: 10
