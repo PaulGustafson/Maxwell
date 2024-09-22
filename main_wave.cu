@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
 
     for (int step = 0; step < steps; ++step) {
         // Run FDTD update
-        fdtd_update(nx, ny, dx, dy, c_p_dt, u_old, u_curr, u_new);
+        run_fdtd_step(nx, ny, dx, dy, c_p_dt, u_old, u_curr, u_new);
 
         // Write state to a file.
         write_state(nx, ny, u_old, step);
