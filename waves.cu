@@ -33,12 +33,6 @@ void write_state(int nx, int ny, float *u, int step) {
     file.close();
 }
 
-// void run_fdtd_step(int nx, int ny, float dx, 
-//         float dy, float c_wave, float t, float *u, float *u_new) {
-//     fdtd_update<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, c_wave, t, u, u_new);
-//     cudaDeviceSynchronize();
-// }
-
 __global__ void init_fields(int nx, int ny, float *u, float *u_new) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     int idy = blockIdx.y * blockDim.y + threadIdx.y;
@@ -47,7 +41,6 @@ __global__ void init_fields(int nx, int ny, float *u, float *u_new) {
         int index = idx * nx + idy;
         // Initial conditions for u and u_new
         // We are starting with a sin wave based on x and y directions.
-        std::cout << "Initializing fields" << index << std::endl;
         u[index] = sin(idx * dx) * sin(idy * dy);
         u_new[index] = 0.0f;
     }
