@@ -49,6 +49,7 @@ int main(int argc, char *argv[]) {
         run_fdtd_step(nx, ny, dx, dy, c_p_dt, step, u_old, u_curr, u_new);
 
         if (step % increment == 0) {
+            std::cout << "Step: " << step << std::endl;
             // Write state to a file.
             write_state(nx, ny, u_curr, step); // Changed u_old to u_curr
         }
