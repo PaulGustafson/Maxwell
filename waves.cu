@@ -87,7 +87,7 @@ __global__ void fdtd_update(int nx, int ny, float dx, float dy, float c_p_dt, fl
 }
 
 void run_fdtd_step(int nx, int ny, float dx, float dy, float c_p_dt, float t, int source_position,
-                   float **u_old, float **u_curr, float **u_new) {
+                   float *u_old, float *u_curr, float *u_new) {
     fdtd_update<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, c_p_dt, t, *u_old, *u_curr, *u_new, source_position);
     cudaDeviceSynchronize();
 
