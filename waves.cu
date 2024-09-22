@@ -11,7 +11,10 @@ void allocate_memory(int nx, int ny, float **u_old, float **u_curr, float **u_ne
 }
 
 void initialize_fields(int nx, int ny, float *u_old, float *u_curr, float *u_new) {
-    init_fields<<<(nx * ny + 255) / 256, 256>>>(nx, ny, u_old, u_curr, u_new);
+    dim3 block_size(16, 16);
+    dim3 grid_size((nx + block_size.x - 1) / block_size.x, (ny + block_size.y - 1) / block_size.y);
+    
+    initialize_fields_kernel<<<grid_size, block_size>>>(nx, ny, u_old, u_curr, u_new);
     cudaDeviceSynchronize();
 }
 
@@ -35,43 +38,57 @@ void write_state(int nx, int ny, float *u_curr, int step) {
     file.close();
 }
 
-__global__ void init_fields(int nx, int ny, float *u_old, float *u_curr, float *u_new) {
-    int cell_id = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (cell_id < nx * ny) {
-        float x = cell_id % nx;
-        float y = cell_id / nx;
-        // Initial conditions for u and u_new
-        // We are starting with a sin wave based on x and y directions.
-        u_old[cell_id] = __sinf(2 * M_PI * x / nx) * __sinf(2 * M_PI * y / ny);
-        u_curr[cell_id] = 0.0f;
-        u_new[cell_id] = 0.0f;
+__global__ void initialize_fields_kernel(int nx, int ny, float *u_old, float *u_curr, float *u_new) {
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    int j = blockIdx.y * blockDim.y + threadIdx.y;
+    
+    if (i < nx && j < ny) {
+        int idx = i + j * nx;
+        
+        // Set initial conditions (e.g., Gaussian pulse)
+        float x = i - nx / 2.0f;
+        float y = j - ny / 2.0f;
+        float r2 = x*x + y*y;
+        float sigma = 10.0f;
+        
+        u_old[idx] = exp(-r2 / (2.0f * sigma * sigma));
+        u_curr[idx] = u_old[idx];
+        u_new[idx] = 0.0f;
     }
 }
 
-void run_fdtd_step(int nx, int ny, float dx, float dy, float c_p_dt, float t,
+__global__ void fdtd_update(int nx, int ny, float dx, float dy, float c_p_dt, float t, float *u_old, float *u_curr, float *u_new, int source_position) {
+    int cell_id = blockIdx.x * blockDim.x + threadIdx.x;
+    if (cell_id < nx * ny) {
+        int i = cell_id % nx;
+        int j = cell_id / nx;
+
+        if (i == 0 || i == nx - 1 || j == 0 || j == ny - 1) {
+            // Implement boundary condition (e.g., Dirichlet)
+            u_new[cell_id] = 0.0f;
+        } else {
+            float d2x = (u_curr[cell_id + 1] - 2.0f * u_curr[cell_id] + u_curr[cell_id - 1]) / (dx * dx);
+            float d2y = (u_curr[cell_id + nx] - 2.0f * u_curr[cell_id] + u_curr[cell_id - nx]) / (dy * dy);
+            
+            u_new[cell_id] = 2.0f * u_curr[cell_id] - u_old[cell_id] + c_p_dt * c_p_dt * (d2x + d2y);
+
+            // Apply source term
+            if (cell_id == source_position) {
+                u_new[cell_id] += source_term(t);
+            }
+        }
+    }
+}
+
+void run_fdtd_step(int nx, int ny, float dx, float dy, float c_p_dt, float t, int source_position,
                    float *u_old, float *u_curr, float *u_new) {
-    fdtd_update<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, c_p_dt, u_old, u_curr, u_new);
+    fdtd_update<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, c_p_dt, t, u_old, u_curr, u_new, source_position);
     cudaDeviceSynchronize();
 
     // Cycle the pointers
+    float *temp = u_old;
     u_old = u_curr;
     u_curr = u_new;
+    u_new = temp;
 }
-
-__global__ void fdtd_update(int nx, int ny, float dx, float dy, float c_p_dt,float *u_old, float *u_curr, float *u_new) {
-    int cell_id = blockIdx.x * blockDim.x + threadIdx.y;
-
-    float alpha_x = c_p_dt / dx;
-    float alpha_y = c_p_dt / dy;
-
-    int x = cell_id % nx;
-    int y = cell_id / nx;
-
-    if (x > 0 && x < nx - 1 && y > 0 && y < ny - 1) {
-        u_new[cell_id] = 2 * u_curr[cell_id] - u_old[cell_id] + alpha_x * (u_curr[cell_id + 1] - 2 * u_curr[cell_id] + u_curr[cell_id - 1]) +
-                         alpha_y * (u_curr[cell_id + nx] - 2 * u_curr[cell_id] + u_curr[cell_id - nx]);
-    }
-}
-    
 
