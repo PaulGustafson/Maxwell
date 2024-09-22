@@ -14,11 +14,12 @@ extern float *u_old, *u_curr, *u_new;
 void allocate_memory(int nx, int ny, float **u_old, float **u_curr, float **u_new);
 void initialize_fields(int nx, int ny, float *u_old, float *u_curr, float *u_new);
 void write_state(int nx, int ny, float *u_curr, int step);
-void run_fdtd_step(int nx, int ny, float dx, float dy, float c_p_dt, float t,
+void run_fdtd_step(int nx, int ny, float dx, float dy, float c_p_dt, float t, int source_position,
                    float *u_old, float *u_curr, float *u_new);
 void free_memory(float *u_old, float *u_curr, float *u_new);
 
 __global__ void initialize_fields_kernel(int nx, int ny, float *u_old, float *u_curr, float *u_new);
-__global__ void fdtd_update(int nx, int ny, float dx, float dy, float c_p_dt, float *u_old, float *u_curr, float *u_new);
+__global__ void fdtd_update(int nx, int ny, float dx, float dy, float c_p_dt, float t, float *u_old, float *u_curr, float *u_new, int source_position);
+__device__ float source_term(float t);
 
 #endif // WAVES_H
