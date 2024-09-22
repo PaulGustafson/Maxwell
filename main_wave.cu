@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
     initialize_fields(nx, ny, u, u_new);
 
     // Write state to a file.
-    write_state(nx, ny, &u, 0);
+    write_state(nx, ny, u, 0);
 
     // Free memory
     free_memory(u, u_new);
