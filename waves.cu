@@ -50,7 +50,7 @@ __global__ void init_fields(int nx, int ny, float *u_old, float *u_curr, float *
 
 void run_fdtd_step(int nx, int ny, float dx, float dy, float c_p_dt, float t,
                    float *u_old, float *u_curr, float *u_new) {
-    fdtd_update<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, c_p_dt, t, u_old, u_curr, u_new);
+    fdtd_update<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, c_p_dt, u_old, u_curr, u_new);
     cudaDeviceSynchronize();
 }
 
