@@ -133,7 +133,7 @@ __global__ void init_fields(int nx, int ny, float *ez, float *dz, float *hx, flo
 //     }
 // }
 
-int main(int argc, char** argv) {
+int main_old(int argc, char** argv) {
     if (argc < 5) {
         std::cerr << "Usage: " << argv[0] << " nx ny steps inc" << std::endl;
         return 1;

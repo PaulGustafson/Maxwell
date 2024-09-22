@@ -3,7 +3,7 @@
 #include <chrono>
 #include <cuda_runtime.h>
 #include <cuda.h>
-#include "main.h" // Include the header file
+#include "main_correct.h" // Include the header file
 
 // Utility function to check CUDA errors
 #define cudaCheckError() { \
@@ -29,13 +29,15 @@ BenchmarkResult measureKernelPerformance(int nx, int ny, float dx, float dy, flo
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
 
+    int total = nx*ny;
     // Warm-up run
-    fdtd_update<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, C0_p_dt, source_position, t, ez, dz, hx, hy, er, mh);
-    cudaDeviceSynchronize();
+    update_h_kernel<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, ez, mh, hx, hy, total);
+    update_e_kernel<<<(nx * ny + 255) / 256, 256>>>(nx, source_position, t, dx,dy, C0_p_dt, ez, dz, er, hx, hy, total);
 
     // Timed run
     cudaEventRecord(start);
-    fdtd_update<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, C0_p_dt, source_position, t, ez, dz, hx, hy, er, mh);
+    update_h_kernel<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, ez, mh, hx, hy, total);
+    update_e_kernel<<<(nx * ny + 255) / 256, 256>>>(nx, source_position, t, dx,dy, C0_p_dt, ez, dz, er, hx, hy, total);
     cudaEventRecord(stop);
 
     cudaEventSynchronize(stop);
@@ -67,7 +69,7 @@ BenchmarkResult measureKernelPerformance(int nx, int ny, float dx, float dy, flo
 // Function to run benchmarks
 void runBenchmarks() {
     std::vector<std::pair<int, int>> gridSizes = {{100, 100}, {500, 500}, {1000, 1000}, {2000, 2000}};
-    int steps = 1000;
+    int steps = 50;
 
     for (const auto& size : gridSizes) {
         int nx = size.first;

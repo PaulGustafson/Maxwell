@@ -66,10 +66,10 @@ __device__ void update_e (
 
 // constexpr int nx = 100;  // Grid size
 // constexpr int ny = 100;
-constexpr float dx = 1.0f;
-constexpr float dy = 1.0f;
-constexpr float dt = 1e-9;  // Time step
-constexpr float C0_p_dt = C0 * dt;
+// constexpr float dx = 1.0f;
+// constexpr float dy = 1.0f;
+// constexpr float dt = 1e-9;  // Time step
+// constexpr float C0_p_dt = C0 * dt;
 
 // Device arrays
 float *ez, *dz, *hx, *hy, *er, *mh;
@@ -97,7 +97,9 @@ __global__ void fdtd_update(int nx, int ny, float dx, float dy, float C0_p_dt, i
     }
 }
 
-int main(int argc, char** argv) {
+
+
+int main_old(int argc, char** argv) {
     if (argc < 5) {
         std::cerr << "Usage: " << argv[0] << " nx ny steps inc" << std::endl;
         return 1;
@@ -136,7 +138,7 @@ int main(int argc, char** argv) {
     cudaMalloc(&hy, nx * ny * sizeof(float));
     cudaMalloc(&er, nx * ny * sizeof(float));
     cudaMalloc(&mh, nx * ny * sizeof(float));
-
+}
 //     // Initialize fields on the device
 //     init_fields<<<(nx * ny + 255) / 256, 256>>>(nx, ny, ez, dz, hx, hy, er, mh);
 //     cudaDeviceSynchronize();

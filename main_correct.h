@@ -23,6 +23,11 @@ __device__ void update_e(int nx, int cell_id, int own_in_process_begin, int sour
 
 // CUDA kernels
 __global__ void init_fields(int nx, int ny, float* ez, float* dz, float* hx, float* hy, float* er, float* mh);
-__global__ void fdtd_update(int nx, int ny, float dx, float dy, float C0_p_dt, int source_position, float t,
-                            float* ez, float* dz, float* hx, float* hy, const float* er, const float* mh);
+__global__ void update_h_kernel(int nx, int ny, float dx, float dy,
+  const float *ez, const float *mh,
+  float *hx, float *hy, int total);
+__global__ void update_e_kernel(int nx, int source_position,
+  float t, float dx, float dy, float C0_p_dt,
+  float *ez, float *dz,
+  const float *er,const float *hx, const float *hy, int total);
 #endif // FDTD_KERNELS_H
