@@ -3,6 +3,7 @@
 #include <fstream>
 #include <string>
 #include "maxwells.cuh"
+#include "display.hpp"
 
 // Add these definitions at the global scope in main.cu
 float *ez, *dz, *hx, *hy, *er, *mh;
@@ -36,6 +37,10 @@ int main(int argc, char *argv[]) {
     std::cout << "increment: " << increment << std::endl;
     std::cout << std::endl;
 
+    // Instantiate Display object
+    Display display;
+
+
     // Grid dimensions
     int source_position = (nx / 2) * nx + (ny / 2);  
     // Allocate memory
@@ -62,9 +67,11 @@ int main(int argc, char *argv[]) {
             for (int y = 0; y < ny; ++y) {
                 for (int x = 0; x < nx; ++x) {
                     file << h_ez[y * nx + x] << " ";
+                    display.setPixel(x, y, h_ez[y * nx + x]);
                 }
                 file << "\n";
             }
+            display.update();
             file.close();
             delete[] h_ez;
         }
