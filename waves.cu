@@ -94,12 +94,14 @@ void run_fdtd_step(int nx, int ny, float dx, float dy, float c_p_dt, float t, in
     cudaDeviceSynchronize();
 
     // Debug print before cycling pointers
-    if (std::round(t) % 10 == 0) {
+    static float last_print_time = -10.0f;  // Initialize to -10 to ensure first print
+    if (t - last_print_time >= 10.0f) {
         float old_value, curr_value, new_value;
         cudaMemcpy(&old_value, u_old + 275, sizeof(float), cudaMemcpyDeviceToHost);
         cudaMemcpy(&curr_value, u_curr + 275, sizeof(float), cudaMemcpyDeviceToHost);
         cudaMemcpy(&new_value, u_new + 275, sizeof(float), cudaMemcpyDeviceToHost);
         printf("After step %f: u_old = %f, u_curr = %f, u_new = %f\n", t, old_value, curr_value, new_value);
+        last_print_time = t;
     }
 
     // Cycle the pointers
