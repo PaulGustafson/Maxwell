@@ -36,10 +36,12 @@ void write_state(int nx, int ny, float *u, int step) {
 __global__ void init_fields(int nx, int ny, float *u, float *u_new) {
     int cell_id = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (cell_id < nx) {
+    if (cell_id < nx * ny) {
+        float x = cell_id % nx;
+        float y = cell_id / nx;
         // Initial conditions for u and u_new
         // We are starting with a sin wave based on x and y directions.
-        u[cell_id] = __sinf(cell_id / nx) * __sinf(cell_id / ny);
+        u[cell_id] = __sinf(2 * M_PI * x / nx) * __sinf(2 * M_PI * y / ny);
         u_new[cell_id] = 0.0f;
     }
 }
