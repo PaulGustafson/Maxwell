@@ -22,8 +22,9 @@ FetchContent_MakeAvailable(raylib)
 add_executable(maxwells main.cu maxwells.cu)
 add_executable(waves main_wave.cu waves.cu)
 add_executable(fdtd_benchmark fdtd_benchmark.cu)
-# find_package(raylib REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
+find_package(raylib REQUIRED)
+target_link_libraries(maxwells PRIVATE raylib)
+target_link_libraries(waves PRIVATE raylib)
 
 set_target_properties(maxwells PROPERTIES
     CUDA_SEPARABLE_COMPILATION ON)
