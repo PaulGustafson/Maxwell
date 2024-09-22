@@ -4,6 +4,30 @@
 #include <cmath>
 #include "waves.cuh"
 
+__device__ float source_term(float t) {
+    float freq = 10.0f; // Adjust frequency as needed
+    return sinf(2.0f * M_PI * freq * t);
+}
+
+__global__ void initialize_fields_kernel(int nx, int ny, float *u_old, float *u_curr, float *u_new) {
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    int j = blockIdx.y * blockDim.y + threadIdx.y;
+    
+    if (i < nx && j < ny) {
+        int idx = i + j * nx;
+        
+        // Set initial conditions (e.g., Gaussian pulse)
+        float x = i - nx / 2.0f;
+        float y = j - ny / 2.0f;
+        float r2 = x*x + y*y;
+        float sigma = 10.0f;
+        
+        u_old[idx] = expf(-r2 / (2.0f * sigma * sigma));
+        u_curr[idx] = u_old[idx];
+        u_new[idx] = 0.0f;
+    }
+}
+
 void allocate_memory(int nx, int ny, float **u_old, float **u_curr, float **u_new) {
     cudaMalloc(u_old, nx * ny * sizeof(float));
     cudaMalloc(u_curr, nx * ny * sizeof(float));
@@ -36,25 +60,6 @@ void write_state(int nx, int ny, float *u_curr, int step) {
         file << "\n";
     }
     file.close();
-}
-
-__global__ void initialize_fields_kernel(int nx, int ny, float *u_old, float *u_curr, float *u_new) {
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    int j = blockIdx.y * blockDim.y + threadIdx.y;
-    
-    if (i < nx && j < ny) {
-        int idx = i + j * nx;
-        
-        // Set initial conditions (e.g., Gaussian pulse)
-        float x = i - nx / 2.0f;
-        float y = j - ny / 2.0f;
-        float r2 = x*x + y*y;
-        float sigma = 10.0f;
-        
-        u_old[idx] = exp(-r2 / (2.0f * sigma * sigma));
-        u_curr[idx] = u_old[idx];
-        u_new[idx] = 0.0f;
-    }
 }
 
 __global__ void fdtd_update(int nx, int ny, float dx, float dy, float c_p_dt, float t, float *u_old, float *u_curr, float *u_new, int source_position) {
