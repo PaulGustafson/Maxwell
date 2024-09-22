@@ -101,28 +101,28 @@ int main(int argc, char** argv) {
     int num_devices = 2;
     check_cuda_error(cudaSetDevice(0), "Unable to set device 0");
     float *ez_0, *dz_0, *hx_0, *hy_0, *er_0, *mh_0;
-    check_cuda_error(cudaMalloc(&ez_0, (nx * ny / 2) * sizeof(float)), "Allocating ez_0");
-    check_cuda_error(cudaMalloc(&dz_0, (nx * ny / 2) * sizeof(float)), "Allocating dz_0");
-    check_cuda_error(cudaMalloc(&hx_0, (nx * ny / 2) * sizeof(float)), "Allocating hx_0");
-    check_cuda_error(cudaMalloc(&hy_0, (nx * ny / 2) * sizeof(float)), "Allocating hy_0");
-    check_cuda_error(cudaMalloc(&er_0, (nx * ny / 2) * sizeof(float)), "Allocating er_0");
-    check_cuda_error(cudaMalloc(&mh_0, (nx * ny / 2) * sizeof(float)), "Allocating mh_0");
+    check_cuda_error(cudaMalloc(&ez_0, (nx * ny / 2 + 1) * sizeof(float)), "Allocating ez_0");
+    check_cuda_error(cudaMalloc(&dz_0, (nx * ny / 2 + 1) * sizeof(float)), "Allocating dz_0");
+    check_cuda_error(cudaMalloc(&hx_0, (nx * ny / 2 + 1) * sizeof(float)), "Allocating hx_0");
+    check_cuda_error(cudaMalloc(&hy_0, (nx * ny / 2 + 1) * sizeof(float)), "Allocating hy_0");
+    check_cuda_error(cudaMalloc(&er_0, (nx * ny / 2 + 1) * sizeof(float)), "Allocating er_0");
+    check_cuda_error(cudaMalloc(&mh_0, (nx * ny / 2 + 1) * sizeof(float)), "Allocating mh_0");
 
     check_cuda_error(cudaSetDevice(1), "Unable to set device 1");
     float *ez_1, *dz_1, *hx_1, *hy_1, *er_1, *mh_1;
-    check_cuda_error(cudaMalloc(&ez_1, (nx * ny / 2) * sizeof(float)), "Allocating ez_1");
-    check_cuda_error(cudaMalloc(&dz_1, (nx * ny / 2) * sizeof(float)), "Allocating dz_1");
-    check_cuda_error(cudaMalloc(&hx_1, (nx * ny / 2) * sizeof(float)), "Allocating hx_1");
-    check_cuda_error(cudaMalloc(&hy_1, (nx * ny / 2) * sizeof(float)), "Allocating hy_1");
-    check_cuda_error(cudaMalloc(&er_1, (nx * ny / 2) * sizeof(float)), "Allocating er_1");
-    check_cuda_error(cudaMalloc(&mh_1, (nx * ny / 2) * sizeof(float)), "Allocating mh_1");
+    check_cuda_error(cudaMalloc(&ez_1, (nx * ny / 2 + 1) * sizeof(float)), "Allocating ez_1");
+    check_cuda_error(cudaMalloc(&dz_1, (nx * ny / 2 + 1) * sizeof(float)), "Allocating dz_1");
+    check_cuda_error(cudaMalloc(&hx_1, (nx * ny / 2 + 1) * sizeof(float)), "Allocating hx_1");
+    check_cuda_error(cudaMalloc(&hy_1, (nx * ny / 2 + 1) * sizeof(float)), "Allocating hy_1");
+    check_cuda_error(cudaMalloc(&er_1, (nx * ny / 2 + 1) * sizeof(float)), "Allocating er_1");
+    check_cuda_error(cudaMalloc(&mh_1, (nx * ny / 2 + 1) * sizeof(float)), "Allocating mh_1");
 
     check_cuda_error(cudaSetDevice(0), "Unable to set device 0");
-    init_fields<<<(nx * ny / 2 + 255) / 256, 256>>>(nx, ny / 2, ez_0, dz_0, hx_0, hy_0, er_0, mh_0);
+    init_fields<<<(nx * ny / 2 + 256) / 256, 256>>>(nx, ny / 2, ez_0, dz_0, hx_0, hy_0, er_0, mh_0);
     cudaDeviceSynchronize();
 
     check_cuda_error(cudaSetDevice(1), "Unable to set device 1");
-    init_fields<<<(nx * ny / 2 + 255) / 256, 256>>>(nx, ny / 2, ez_1, dz_1, hx_1, hy_1, er_1, mh_1);
+    init_fields<<<(nx * ny / 2 + 256) / 256, 256>>>(nx, ny / 2, ez_1, dz_1, hx_1, hy_1, er_1, mh_1);
     cudaDeviceSynchronize();
 
     // Time-stepping loop
@@ -131,37 +131,41 @@ int main(int argc, char** argv) {
 
         // GPU 0 update
         check_cuda_error(cudaSetDevice(0), "Unable to set device 0");
-        fdtd_update<<<(nx * (ny / 2) + 255) / 256, 256>>>(nx, ny / 2, dx, dy, C0_p_dt, source_position - (ny / 2) * nx, t, ez_0, dz_0, hx_0, hy_0, er_0, mh_0);
+        fdtd_update<<<(nx * (ny / 2) + 256) / 256, 256>>>(nx, ny / 2, dx, dy, C0_p_dt, source_position, t, ez_0, dz_0, hx_0, hy_0, er_0, mh_0);
         
         // GPU 1 update
         check_cuda_error(cudaSetDevice(1), "Unable to set device 1");
-        fdtd_update<<<(nx * (ny / 2) + 255) / 256, 256>>>(nx, ny / 2, dx, dy, C0_p_dt, source_position - (nx * (ny / 2)), t, ez_1, dz_1, hx_1, hy_1, er_1, mh_1);
+        fdtd_update<<<(nx * (ny / 2) + 256) / 256, 256>>>(nx, ny / 2, dx, dy, C0_p_dt, source_position - (nx * (ny / 2)), t, ez_1, dz_1, hx_1, hy_1, er_1, mh_1);
         
         // Synchronize updates
         cudaDeviceSynchronize();
 
         // // Exchange boundary data (between GPU 0 and GPU 1)
         // // Copy the last row from GPU 0 to GPU 1 and the first row from GPU 1 to GPU 0
-        // float *boundary_row_0 = (float*)malloc(nx * sizeof(float));
-        // float *boundary_row_1 = (float*)malloc(nx * sizeof(float));
+        float *boundary_row_0 = (float*)malloc(nx * sizeof(float));
+        float *boundary_row_1 = (float*)malloc(nx * sizeof(float));
         
-        // // Copy last row of ez_0 (the boundary) to host
-        // check_cuda_error(cudaMemcpy(boundary_row_0, &ez_0[(ny / 2 - 1) * nx], nx * sizeof(float), cudaMemcpyDeviceToHost), "Copy boundary row 0 to host");
+        // Copy last row of ez_0 (the boundary) to host
+        check_cuda_error(cudaMemcpy(boundary_row_0, &ez_0[(ny / 2 - 1) * nx], nx * sizeof(float), cudaMemcpyDeviceToHost), "Copy boundary row 0 to host");
         
-        // // Copy to GPU 1
-        // check_cuda_error(cudaSetDevice(1), "Unable to set device 1");
-        // check_cuda_error(cudaMemcpy(&ez_1[0], boundary_row_0, nx * sizeof(float), cudaMemcpyHostToDevice), "Copy boundary row 0 to GPU 1");
+        // Copy first row of ez_1 (the boundary) to host
+        check_cuda_error(cudaSetDevice(1), "Unable to set device 1");
+        check_cuda_error(cudaMemcpy(boundary_row_1, &ez_1[0], nx * sizeof(float), cudaMemcpyDeviceToHost), "Copy boundary row 1 to host");
 
-        // // Copy first row of ez_1 (the boundary) to host
-        // check_cuda_error(cudaSetDevice(1), "Unable to set device 1");
-        // check_cuda_error(cudaMemcpy(boundary_row_1, &ez_1[0], nx * sizeof(float), cudaMemcpyDeviceToHost), "Copy boundary row 1 to host");
+        for (int i = 0; i < nx; i++) {
+            boundary_row_1[i] += boundary_row_0[i];
+        }
 
-        // // Copy to GPU 0
-        // check_cuda_error(cudaSetDevice(0), "Unable to set device 0");
-        // check_cuda_error(cudaMemcpy(&ez_0[(ny / 2) * nx], boundary_row_1, nx * sizeof(float), cudaMemcpyHostToDevice), "Copy boundary row 1 to GPU 0");
+        // Copy to GPU 1
+        check_cuda_error(cudaSetDevice(1), "Unable to set device 1");
+        check_cuda_error(cudaMemcpy(&ez_1[0], boundary_row_1, nx * sizeof(float), cudaMemcpyHostToDevice), "Copy boundary row 0 to GPU 1");
 
-        // free(boundary_row_0);
-        // free(boundary_row_1);
+        // Copy to GPU 0
+        check_cuda_error(cudaSetDevice(0), "Unable to set device 0");
+        check_cuda_error(cudaMemcpy(&ez_0[(ny / 2 - 1) * nx], boundary_row_1, nx * sizeof(float), cudaMemcpyHostToDevice), "Copy boundary row 1 to GPU 0");
+
+        free(boundary_row_0);
+        free(boundary_row_1);
 
         // Optionally print or log values of the field at the center of the grid
         if (step % increment == 0) {
