@@ -48,6 +48,12 @@ __global__ void init_fields(int nx, int ny, float *u_old, float *u_curr, float *
     }
 }
 
+void run_fdtd_step(int nx, int ny, float dx, float dy, float c_p_dt, float t,
+                   float *u_old, float *u_curr, float *u_new) {
+    fdtd_update<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, c_p_dt, t, u_old, u_curr, u_new);
+    cudaDeviceSynchronize();
+}
+
 __global__ void fdtd_update(int nx, int ny, float dx, float dy, float c_p_dt,float *u_old, float *u_curr, float *u_new) {
     int cell_id = blockIdx.x * blockDim.x + threadIdx.y;
 
@@ -57,7 +63,6 @@ __global__ void fdtd_update(int nx, int ny, float dx, float dy, float c_p_dt,flo
     int x = cell_id % nx;
     int y = cell_id / nx;
 
-    if (x > 0) {
 }
     
 
