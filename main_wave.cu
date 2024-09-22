@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
     initialize_fields(nx, ny, u_old, u_curr, u_new);
 
     // Add this check before the main loop
-    float cfl = c * dt * sqrtf(1.0f/(dx*dx) + 1.0f/(dy*dy));
+    float cfl = c_wave * dt * sqrtf(1.0f/(dx*dx) + 1.0f/(dy*dy));
     if (cfl >= 1.0f) {
         std::cerr << "Error: CFL condition not satisfied. Please reduce dt." << std::endl;
         return 1;

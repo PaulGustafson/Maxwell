@@ -5,7 +5,7 @@
 #include "waves.cuh"
 
 __device__ float source_term(float t) {
-    float freq = 10.0f; // Adjust frequency as needed
+    float freq = 5.0f; // Adjust frequency as needed
     return sinf(2.0f * M_PI * freq * t);
 }
 
@@ -16,14 +16,15 @@ __global__ void initialize_fields_kernel(int nx, int ny, float *u_old, float *u_
     if (i < nx && j < ny) {
         int idx = i + j * nx;
         
-        // Set initial conditions (e.g., Gaussian pulse)
-        float x = i - nx / 2.0f;
-        float y = j - ny / 2.0f;
-        float r2 = x*x + y*y;
-        float sigma = 10.0f;
-        
-        u_old[idx] = expf(-r2 / (2.0f * sigma * sigma));
-        u_curr[idx] = u_old[idx];
+        // // Set initial conditions (e.g., sin wave)
+        // float kx = 2.0f * M_PI / nx * 12;
+        // float ky = 2.0f * M_PI / ny * 8;
+        // u_old[idx] = __sinf((kx * i + ky * j));
+        // u_curr[idx] = u_old[idx];
+        // u_new[idx] = 0.0f;
+        // Set initial conditions to 0
+        u_old[idx] = 0.0f;
+        u_curr[idx] = 0.0f;
         u_new[idx] = 0.0f;
     }
 }
@@ -69,7 +70,7 @@ __global__ void fdtd_update(int nx, int ny, float dx, float dy, float c_p_dt, fl
         int j = cell_id / nx;
 
         if (i == 0 || i == nx - 1 || j == 0 || j == ny - 1) {
-            // Implement absorbing boundary condition
+            // Implement reflection boundary condition
             u_new[cell_id] = u_curr[cell_id];
         } else {
             float d2x = (u_curr[cell_id + 1] - 2.0f * u_curr[cell_id] + u_curr[cell_id - 1]) / (dx * dx);
@@ -80,7 +81,7 @@ __global__ void fdtd_update(int nx, int ny, float dx, float dy, float c_p_dt, fl
 
             // Apply source term
             if (cell_id == source_position) {
-                u_new[cell_id] += c_p_dt * c_p_dt * source_term(t);
+                u_new[cell_id] += 100 * c_p_dt * c_p_dt * source_term(t);
             }
         }
     }
@@ -96,9 +97,9 @@ void run_fdtd_step(int nx, int ny, float dx, float dy, float c_p_dt, float t, in
     static float last_print_time = -10.0f;
     if (t - last_print_time >= 10.0f) {
         float old_value, curr_value, new_value;
-        cudaMemcpy(&old_value, *u_old + 275, sizeof(float), cudaMemcpyDeviceToHost);
-        cudaMemcpy(&curr_value, *u_curr + 275, sizeof(float), cudaMemcpyDeviceToHost);
-        cudaMemcpy(&new_value, *u_new + 275, sizeof(float), cudaMemcpyDeviceToHost);
+        cudaMemcpy(&old_value, *u_old + source_position, sizeof(float), cudaMemcpyDeviceToHost);
+        cudaMemcpy(&curr_value, *u_curr + source_position, sizeof(float), cudaMemcpyDeviceToHost);
+        cudaMemcpy(&new_value, *u_new + source_position, sizeof(float), cudaMemcpyDeviceToHost);
         printf("After step %f: u_old = %f, u_curr = %f, u_new = %f\n", t, old_value, curr_value, new_value);
         last_print_time = t;
     }
