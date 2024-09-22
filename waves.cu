@@ -69,17 +69,18 @@ __global__ void fdtd_update(int nx, int ny, float dx, float dy, float c_p_dt, fl
         int j = cell_id / nx;
 
         if (i == 0 || i == nx - 1 || j == 0 || j == ny - 1) {
-            // Implement boundary condition (e.g., Dirichlet)
-            u_new[cell_id] = 0.0f;
+            // Implement absorbing boundary condition
+            u_new[cell_id] = u_curr[cell_id];
         } else {
             float d2x = (u_curr[cell_id + 1] - 2.0f * u_curr[cell_id] + u_curr[cell_id - 1]) / (dx * dx);
             float d2y = (u_curr[cell_id + nx] - 2.0f * u_curr[cell_id] + u_curr[cell_id - nx]) / (dy * dy);
             
+            // Update wave equation
             u_new[cell_id] = 2.0f * u_curr[cell_id] - u_old[cell_id] + c_p_dt * c_p_dt * (d2x + d2y);
 
             // Apply source term
             if (cell_id == source_position) {
-                u_new[cell_id] += source_term(t);
+                u_new[cell_id] += c_p_dt * c_p_dt * source_term(t);
             }
         }
     }
