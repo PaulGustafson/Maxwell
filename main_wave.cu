@@ -5,7 +5,7 @@
 #include "waves.cuh"
 
 // Add these definitions at the global scope in main.cu
-float *u, *u_new;
+float *u_old, *u_curr, *u_new;
 
 int main(int argc, char *argv[]) {
     if (argc < 5) {
@@ -39,16 +39,24 @@ int main(int argc, char *argv[]) {
     // Grid dimensions
     int source_position = (nx / 2) * nx + (ny / 2);  
     // Allocate memory
-    allocate_memory(nx, ny, &u, &u_new);
+    allocate_memory(nx, ny, &u_old, &u_curr, &u_new);
 
     // Initialize fields
-    initialize_fields(nx, ny, u, u_new);
+    initialize_fields(nx, ny, u_old, u_curr, u_new);
+
+    for (int step = 0; step < steps; ++step) {
+        // Run FDTD update
+        fdtd_update(nx, ny, u_old, u_curr, u_new);
+
+        // Write state to a file.
+        write_state(nx, ny, u_old, step);
+    }
 
     // Write state to a file.
-    write_state(nx, ny, u, 0);
+    write_state(nx, ny, u_curr, 0);
 
     // Free memory
-    free_memory(u, u_new);
+    free_memory(u_old, u_curr, u_new);
 
     return 0;
 }
