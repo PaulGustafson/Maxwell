@@ -94,11 +94,13 @@ void run_fdtd_step(int nx, int ny, float dx, float dy, float c_p_dt, float t, in
     cudaDeviceSynchronize();
 
     // Debug print before cycling pointers
-    float old_value, curr_value, new_value;
-    cudaMemcpy(&old_value, u_old + 275, sizeof(float), cudaMemcpyDeviceToHost);
-    cudaMemcpy(&curr_value, u_curr + 275, sizeof(float), cudaMemcpyDeviceToHost);
-    cudaMemcpy(&new_value, u_new + 275, sizeof(float), cudaMemcpyDeviceToHost);
-    printf("After step %f: u_old = %f, u_curr = %f, u_new = %f\n", t, old_value, curr_value, new_value);
+    if (t % 10 == 0) {
+        float old_value, curr_value, new_value;
+        cudaMemcpy(&old_value, u_old + 275, sizeof(float), cudaMemcpyDeviceToHost);
+        cudaMemcpy(&curr_value, u_curr + 275, sizeof(float), cudaMemcpyDeviceToHost);
+        cudaMemcpy(&new_value, u_new + 275, sizeof(float), cudaMemcpyDeviceToHost);
+        printf("After step %f: u_old = %f, u_curr = %f, u_new = %f\n", t, old_value, curr_value, new_value);
+    }
 
     // Cycle the pointers
     float *temp = u_old;
