@@ -41,7 +41,6 @@ __global__ void init_fields(int nx, int ny, float *u, float *u_new) {
         int index = idx * nx + idy;
         // Initial conditions for u and u_new
         // We are starting with a sin wave based on x and y directions.
-        std::cout << "Initializing fields" << index << std::endl;
         u[index] = sin(idx * dx) * sin(idy * dy);
         u_new[index] = 0.0f;
     }
