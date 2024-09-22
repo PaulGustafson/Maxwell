@@ -87,14 +87,21 @@ __global__ void fdtd_update(int nx, int ny, float dx, float dy, float c_p_dt, fl
 }
 
 void run_fdtd_step(int nx, int ny, float dx, float dy, float c_p_dt, float t, int source_position,
-                   float *u_old, float *u_curr, float *u_new) {
-    fdtd_update<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, c_p_dt, t, u_old, u_curr, u_new, source_position);
+                   float **u_old, float **u_curr, float **u_new) {
+    fdtd_update<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, c_p_dt, t, *u_old, *u_curr, *u_new, source_position);
     cudaDeviceSynchronize();
 
+    // Debug print before cycling pointers
+    float old_value, curr_value, new_value;
+    cudaMemcpy(&old_value, *u_old + source_position, sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(&curr_value, *u_curr + source_position, sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(&new_value, *u_new + source_position, sizeof(float), cudaMemcpyDeviceToHost);
+    printf("After step %f: u_old = %f, u_curr = %f, u_new = %f\n", t, old_value, curr_value, new_value);
+
     // Cycle the pointers
-    float *temp = u_old;
-    u_old = u_curr;
-    u_curr = u_new;
-    u_new = temp;
+    float *temp = *u_old;
+    *u_old = *u_curr;
+    *u_curr = *u_new;
+    *u_new = temp;
 }
 
