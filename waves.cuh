@@ -18,7 +18,7 @@ void run_fdtd_step(int nx, int ny, float dx, float dy, float c_p_dt, float t,
                    float *u_old, float *u_curr, float *u_new);
 void free_memory(float *u_old, float *u_curr, float *u_new);
 
-__global__ void init_fields(int nx, int ny, float *u_old, float *u_curr, float *u_new);
+__global__ void initialize_fields_kernel(int nx, int ny, float *u_old, float *u_curr, float *u_new);
 __global__ void fdtd_update(int nx, int ny, float dx, float dy, float c_p_dt, float *u_old, float *u_curr, float *u_new);
 
 #endif // WAVES_H

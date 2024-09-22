@@ -45,15 +45,14 @@ int main(int argc, char *argv[]) {
     initialize_fields(nx, ny, u_old, u_curr, u_new);
 
     for (int step = 0; step < steps; ++step) {
+        float t = step * dt;
         // Run FDTD update
-        run_fdtd_step(nx, ny, dx, dy, c_p_dt, step, u_old, u_curr, u_new);
+        run_fdtd_step(nx, ny, dx, dy, c_p_dt, t, source_position, u_old, u_curr, u_new);
 
         if (step % increment == 0) {
-            std::cout << "Step: " << step << std::endl;
             // Write state to a file.
-            write_state(nx, ny, u_curr, step); // Changed u_old to u_curr
+            write_state(nx, ny, u_curr, step);
         }
-
     }
 
     // Free memory
