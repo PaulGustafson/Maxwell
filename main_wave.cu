@@ -52,9 +52,6 @@ int main(int argc, char *argv[]) {
         write_state(nx, ny, u_old, step);
     }
 
-    // Write state to a file.
-    write_state(nx, ny, u_curr, 0);
-
     // Free memory
     free_memory(u_old, u_curr, u_new);
 

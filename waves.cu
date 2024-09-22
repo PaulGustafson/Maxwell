@@ -64,6 +64,10 @@ __global__ void fdtd_update(int nx, int ny, float dx, float dy, float c_p_dt,flo
     int x = cell_id % nx;
     int y = cell_id / nx;
 
+    if (x > 0 && x < nx - 1 && y > 0 && y < ny - 1) {
+        u_new[cell_id] = 2 * u_curr[cell_id] - u_old[cell_id] + alpha_x * (u_curr[cell_id + 1] - 2 * u_curr[cell_id] + u_curr[cell_id - 1]) +
+                         alpha_y * (u_curr[cell_id + nx] - 2 * u_curr[cell_id] + u_curr[cell_id - nx]);
+    }
 }
     
 
