@@ -48,8 +48,11 @@ int main(int argc, char *argv[]) {
         // Run FDTD update
         run_fdtd_step(nx, ny, dx, dy, c_p_dt, step, u_old, u_curr, u_new);
 
-        // Write state to a file.
-        write_state(nx, ny, u_old, step);
+        if (step % increment == 0) {
+            // Write state to a file.
+            write_state(nx, ny, u_old, step);
+        }
+
     }
 
     // Free memory
