@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
 
         if (step % increment == 0) {
             // Write state to a file.
-            write_state(nx, ny, u_old, step);
+            write_state(nx, ny, u_curr, step); // Changed u_old to u_curr
         }
 
     }
