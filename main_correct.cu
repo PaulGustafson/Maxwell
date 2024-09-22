@@ -170,6 +170,7 @@ int main_old(int argc, char** argv) {
         update_h_kernel<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, ez, mh, hx, hy, total);
         update_e_kernel<<<(nx * ny + 255) / 256, 256>>>(nx, source_position, t, dx,dy, C0_p_dt, ez, dz, er, hx, hy, total);
         
+        // cudaDeviceSynchronize();
 
         // Optionally print or log values of the field at the center of the grid
         if (step % increment == 0) {
