@@ -94,7 +94,7 @@ void run_fdtd_step(int nx, int ny, float dx, float dy, float c_p_dt, float t, in
     cudaDeviceSynchronize();
 
     // Debug print before cycling pointers
-    if (t % 10 == 0) {
+    if (std::round(t) % 10 == 0) {
         float old_value, curr_value, new_value;
         cudaMemcpy(&old_value, u_old + 275, sizeof(float), cudaMemcpyDeviceToHost);
         cudaMemcpy(&curr_value, u_curr + 275, sizeof(float), cudaMemcpyDeviceToHost);
