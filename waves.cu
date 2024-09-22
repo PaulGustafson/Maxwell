@@ -20,12 +20,13 @@ void free_memory(float *u, float *u_new) {
 }
 
 void write_state(int nx, int ny, float *u, int step) {
+    float *h_u = new float[nx * ny];  // Allocate host memory
+    cudaMemcpy(h_u, u, nx * ny * sizeof(float), cudaMemcpyDeviceToHost);  // Copy data from device to host
+
     std::ofstream file("data/u_step_" + std::to_string(step) + ".txt");
     for (int y = 0; y < ny; ++y) {
-        std::cout << "Writing row " << y << std::endl;
         for (int x = 0; x < nx; ++x) {
-            std::cout << "Writing row " << y << std::endl;
-            file << u[y * nx + x] << " ";
+            file << h_u[y * nx + x] << " ";
         }
         file << "\n";
     }
