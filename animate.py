@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import seaborn as sns
 
-frames = 15
+frames = 150
 increment = 10
 timesteps = increment*frames
-nx, ny = 100, 100
+nx, ny = 256, 256
 
 def load_ez(step):
     # Load the data from the file saved for each time step
