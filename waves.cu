@@ -87,27 +87,26 @@ __global__ void fdtd_update(int nx, int ny, float dx, float dy, float c_p_dt, fl
 }
 
 void run_fdtd_step(int nx, int ny, float dx, float dy, float c_p_dt, float t, int source_position,
-                   float *u_old, float *u_curr, float *u_new) {
-    // The function parameters should be float *u_old, *u_curr, *u_new, not float **
-    // So we need to remove the dereferencing (*) when passing to the kernel
-    fdtd_update<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, c_p_dt, t, u_old, u_curr, u_new, source_position);
+                   float **u_old, float **u_curr, float **u_new) {
+    // Use double pointers to modify the global pointers
+    fdtd_update<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, c_p_dt, t, *u_old, *u_curr, *u_new, source_position);
     cudaDeviceSynchronize();
 
     // Debug print before cycling pointers
-    static float last_print_time = -10.0f;  // Initialize to -10 to ensure first print
+    static float last_print_time = -10.0f;
     if (t - last_print_time >= 10.0f) {
         float old_value, curr_value, new_value;
-        cudaMemcpy(&old_value, u_old + 275, sizeof(float), cudaMemcpyDeviceToHost);
-        cudaMemcpy(&curr_value, u_curr + 275, sizeof(float), cudaMemcpyDeviceToHost);
-        cudaMemcpy(&new_value, u_new + 275, sizeof(float), cudaMemcpyDeviceToHost);
+        cudaMemcpy(&old_value, *u_old + 275, sizeof(float), cudaMemcpyDeviceToHost);
+        cudaMemcpy(&curr_value, *u_curr + 275, sizeof(float), cudaMemcpyDeviceToHost);
+        cudaMemcpy(&new_value, *u_new + 275, sizeof(float), cudaMemcpyDeviceToHost);
         printf("After step %f: u_old = %f, u_curr = %f, u_new = %f\n", t, old_value, curr_value, new_value);
         last_print_time = t;
     }
 
     // Cycle the pointers
-    float *temp = u_old;
-    u_old = u_curr;
-    u_curr = u_new;
-    u_new = temp;
+    float *temp = *u_old;
+    *u_old = *u_curr;
+    *u_curr = *u_new;
+    *u_new = temp;
 }
 
