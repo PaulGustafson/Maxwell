@@ -53,8 +53,10 @@ void run_fdtd_step(int nx, int ny, float dx, float dy, float c_p_dt, float t,
                    float *u_old, float *u_curr, float *u_new) {
     fdtd_update<<<(nx * ny + 255) / 256, 256>>>(nx, ny, dx, dy, c_p_dt, u_old, u_curr, u_new);
     cudaDeviceSynchronize();
-    // Update u_old with u_curr
-    cudaMemcpy(u_old, u_curr, nx * ny * sizeof(float), cudaMemcpyDeviceToDevice);
+
+    // Cycle the pointers
+    u_old = u_curr;
+    u_curr = u_new;
 }
 
 __global__ void fdtd_update(int nx, int ny, float dx, float dy, float c_p_dt,float *u_old, float *u_curr, float *u_new) {
