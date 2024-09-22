@@ -4,8 +4,9 @@
 #include <cmath>
 #include "waves.cuh"
 
-void allocate_memory(int nx, int ny, float **u, float **u_new) {
-    cudaMalloc(u, nx * ny * sizeof(float));
+void allocate_memory(int nx, int ny, float **u_old, float **u_curr, float **u_new) {
+    cudaMalloc(u_old, nx * ny * sizeof(float));
+    cudaMalloc(u_curr, nx * ny * sizeof(float));
     cudaMalloc(u_new, nx * ny * sizeof(float));
 }
 
